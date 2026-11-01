@@ -1,5 +1,28 @@
 import os
 
+schema_write_file = {
+    "type": "function",
+    "function": {
+        "name": "write_file",
+        "description": "Writes a content string to a given file path relative to the working directory, overwriting previous content and creating any missing directories",
+        "parameters": {
+            "required": {
+                "type": "object",
+                "properties": {
+                    "file_path": {
+                        "type": "string",
+                        "description": "File path to write the content string to, relative to the working directory. Any missing directories in the file path will be created",
+                    },
+                    "content": {
+                        "type": "string",
+                        "description": "Content to write to the file, in string format"
+                    }
+                },
+            },
+        },
+    },
+}
+
 def write_file(working_directory: str, file_path: str, content: str) -> str:
     try:
         working_dir_abs = os.path.abspath(working_directory)

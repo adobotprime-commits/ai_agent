@@ -1,7 +1,10 @@
 import os
 import argparse
+import json
 from dotenv import load_dotenv
 from openai import OpenAI
+from call_function import available_functions, call_function
+from prompts import system_prompt
 
 def main():
 
@@ -27,6 +30,7 @@ def main():
     )
 
     messages = [
+        {"role": "system", "content": system_prompt},
         {"role": "user", "content": args.user_prompt},
     ]
 
@@ -34,9 +38,10 @@ def main():
     response = client.chat.completions.create(
         model="openrouter/free",
         messages=messages,
+        tools=available_functions,
+        temperature=0,
     )
 
-    # Print output to console
     if response.usage is None:
         raise RuntimeError("API request failed")
 
@@ -45,7 +50,18 @@ def main():
         print(f'Prompt tokens: {response.usage.prompt_tokens}')
         print(f'Response tokens: {response.usage.completion_tokens}')
 
-    print(f'Response: \n{response.choices[0].message.content}')
+    # Handle function calls
+    message = response.choices[0].message
+    if message.tool_calls:
+        for tool_call in message.tool_calls:
+            result_message = call_function(tool_call)
+            if result_message["content"] is None:
+                raise Exception(f"No content returned by function call to {tool_call.function.name}")
+            if args.verbose is True:
+                print(f"-> {result_message['content']}")
+    # Print output to console
+    else:
+        print(f'Response: \n{message.content}')
 
 
 if __name__ == "__main__":
