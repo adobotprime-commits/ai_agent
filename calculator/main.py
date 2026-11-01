@@ -14,6 +14,11 @@ def main() -> None:
         return
 
     expression = " ".join(sys.argv[1:])
+    print(f"DEBUG: expression = '{expression}'")  # DEBUG LINE
+    if not expression.strip():
+        print("Error: Expression is empty or contains only whitespace.")
+        return
+
     try:
         result = calculator.evaluate(expression)
         if result is not None:

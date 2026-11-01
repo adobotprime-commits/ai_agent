@@ -34,34 +34,43 @@ def main():
         {"role": "user", "content": args.user_prompt},
     ]
 
-    # Get response from AI client
-    response = client.chat.completions.create(
-        model="openrouter/free",
-        messages=messages,
-        tools=available_functions,
-        temperature=0,
-    )
+    # Loop AI Agent
 
-    if response.usage is None:
-        raise RuntimeError("API request failed")
+    for _ in range(20):
+        # Get response from AI client
+        response = client.chat.completions.create(
+            model="openrouter/free",
+            messages=messages,
+            tools=available_functions,
+            temperature=0,
+        )
 
-    if args.verbose is True:
-        print(f'User prompt: {args.user_prompt}')
-        print(f'Prompt tokens: {response.usage.prompt_tokens}')
-        print(f'Response tokens: {response.usage.completion_tokens}')
+        if response.usage is None:
+            raise RuntimeError("API request failed")
 
-    # Handle function calls
-    message = response.choices[0].message
-    if message.tool_calls:
-        for tool_call in message.tool_calls:
-            result_message = call_function(tool_call)
-            if result_message["content"] is None:
-                raise Exception(f"No content returned by function call to {tool_call.function.name}")
-            if args.verbose is True:
-                print(f"-> {result_message['content']}")
-    # Print output to console
-    else:
-        print(f'Response: \n{message.content}')
+        if args.verbose is True:
+            print(f'User prompt: {args.user_prompt}')
+            print(f'Prompt tokens: {response.usage.prompt_tokens}')
+            print(f'Response tokens: {response.usage.completion_tokens}')
+
+        # Handle function calls
+        message = response.choices[0].message
+        messages.append(message)
+        if message.tool_calls:
+            for tool_call in message.tool_calls:
+                result_message = call_function(tool_call)
+                if result_message["content"] is None:
+                    raise Exception(f"No content returned by function call to {tool_call.function.name}")
+                if args.verbose is True:
+                    print(f"-> {result_message['content']}")
+                messages.append(result_message)
+        # Print output to console
+        else:
+            print(f'Response: \n{message.content}')
+            return
+
+    print("-- Program ended, Agent could not complete request within 20 responses --")
+    exit(1)
 
 
 if __name__ == "__main__":
